@@ -26,14 +26,14 @@ void insertar_inicio(ListaDL *lista, DATO dato) {
 
     if (lista->cabeza == NULL) {
         lista->cabeza = nuevo;
-	nuevo->siguiente=nuevo;
-	nuevo->previo=nuevo;
+		nuevo->siguiente=nuevo;
+		nuevo->previo=nuevo;
     } else {
-        dllista *temp;
-	nuevo->siguiente = lista->cabeza;
-        lista->cabeza->previo = nuevo;
-	lista->cabeza->siguiente = nuevo;
-        lista->cabeza = nuevo;
+		nuevo->siguiente = lista->cabeza;
+		nuevo->previo=lista->cabeza->previo;
+		lista->cabeza->previo->siguiente= nuevo;
+		lista->cabeza->previo=nuevo;
+		lista->cabeza = nuevo;
     }
     lista->longitud++;
 }
@@ -48,12 +48,11 @@ void insertar_final(ListaDL *lista, DATO dato) {
 	nuevo->siguiente= nuevo;
 	nuevo->previo=nuevo;
     } else {
-        dllista *actual = lista->cabeza;
-        while (actual->siguiente != lista->cabeza)
-            actual = actual->siguiente;
+        dllista *actual = lista->cabeza->previo;
         actual->siguiente = nuevo;
         nuevo->previo = actual;
-	nuevo->siguiente = lista->cabeza;
+		nuevo->siguiente = lista->cabeza;
+		lista->cabeza->previo=nuevo;
     }
     lista->longitud++;
 }
@@ -96,13 +95,11 @@ DATO eliminar_inicio(ListaDL *lista) {
     if (lista->cabeza->siguiente == lista->cabeza) {
         lista->cabeza = NULL;
     } else {
-	dllista *actual=lista->cabeza;
-	while(actual->siguiente != actual);
-		actual=actual->siguiente;
-        lista->cabeza = lista->cabeza->siguiente;
-        lista->cabeza->previo = actual;
-    }
-
+	dllista *actual=lista->cabeza->previo;
+    lista->cabeza = eliminado->siguiente;
+    lista->cabeza->previo = actual;
+	actual->siguiente=lista->cabeza;
+	}
     free(eliminado);
     lista->longitud--;
     return dato;
@@ -112,16 +109,15 @@ DATO eliminar_final(ListaDL *lista) {
     if (lista->cabeza == NULL)
         return -1;
 
-    dllista *actual = lista->cabeza;
-    while (actual->siguiente != actual)
-        actual = actual->siguiente;
+    dllista *actual = lista->cabeza->previo;
 
     DATO dato = actual->dato;
 
-    if (actual->previo == actual) {
+    if (actual == lista->cabeza) {
         lista->cabeza = NULL;
     } else {
-        actual->previo->siguiente = NULL;
+        actual->previo->siguiente = lista->cabeza;
+        lista->cabeza->previo=actual->previo;
     }
 
     free(actual);
@@ -151,14 +147,17 @@ DATO eliminar_en_posicion(ListaDL *lista, int posicion) {
 }
 
 int buscar(ListaDL *lista, DATO dato) {
+    if (lista->cabeza == NULL)
+        return -1;
+        
     dllista *actual = lista->cabeza;
     int posicion = 0;
-    while (actual->siguiente != actual) {
+    do{
         if (actual->dato == dato)
             return posicion;
         actual = actual->siguiente;
         posicion++;
-    }
+    }while (actual != lista->cabeza) ;
     return -1;
 }
 
@@ -181,39 +180,44 @@ int longitud(ListaDL *lista) {
 }
 
 void imprimir_lista(ListaDL *lista) {
+    if (lista->cabeza == NULL)
+        return;
     dllista *actual = lista->cabeza;
-    while (actual->siguiente != actual) {
+    do{
         printf("[%d]", actual->dato);
-        if (actual->siguiente != actual)
+        if (actual->siguiente != lista->cabeza)
             printf(" <-> ");
         actual = actual->siguiente;
-    }
+    }while (actual != lista->cabeza);
     printf(" -> Retorno\n");
 }
 
 void imprimir_lista_reversa(ListaDL *lista) {
-    dllista *actual = lista->cabeza;
-    if (actual->siguiente == NULL) {
-        printf(" -> NULL\n");
+    if (lista->cabeza == NULL)
         return;
-    }
-    while (actual->siguiente != actual)
-        actual = actual->siguiente;
-    while (actual != actual) {
+    dllista *actual = lista->cabeza->previo;
+    do {
         printf("[%d]", actual->dato);
         if (actual->previo != lista->cabeza->previo)
             printf(" <-> ");
         actual = actual->previo;
-    }
+    }while (actual != lista->cabeza->previo);
     printf(" -> Retorno\n");
 }
 
 void liberar_lista(ListaDL *lista) {
-    dllista *actual = lista->cabeza;
-    while (actual->siguiente != actual) {
-        dllista *siguiente = actual->siguiente;
-        free(actual);
-        actual = siguiente;
+    if (lista->cabeza == NULL) {
+        free(lista);
+        return;
+    }
+    if (lista->cabeza != NULL) {
+        dllista *actual = lista->cabeza->siguiente;
+        while (actual != lista->cabeza) {
+            dllista *temp = actual;
+            actual = actual->siguiente;
+            free(temp);
+        }
+        free(lista->cabeza);
     }
     free(lista);
 }
